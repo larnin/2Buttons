@@ -9,7 +9,7 @@ public class HookBehaviour : MonoBehaviour
     class HookInteractionInfo
     {
         public LayerMask mask;
-        public HookInteractionBase hookInteraction;
+        public HookInteractionBase hookInteraction = null;
     }
 
     enum HookState
@@ -22,7 +22,8 @@ public class HookBehaviour : MonoBehaviour
 
     [SerializeField] float m_maxDistance = 10.0f;
     [SerializeField] float m_hookSpeed = 10.0f;
-    [SerializeField] List<HookInteractionInfo> m_hookInteractions;
+    [SerializeField] List<HookInteractionInfo> m_hookInteractions = new List<HookInteractionInfo>();
+    [SerializeField] LayerMask m_hookInteractionMask;
 
     SubscriberList m_subscriberList = new SubscriberList();
 
@@ -32,8 +33,11 @@ public class HookBehaviour : MonoBehaviour
 
     bool m_needNextThrow = false;
     float m_nextThrowAngle = 0.0f;
+    int m_hookInteractionIndex = 0;
 
     GameObject m_hookObject = null;
+    GameObject m_hookGrabPoint = null;
+    GameObject m_grabObject = null;
 
     private void Awake()
     {
@@ -107,12 +111,17 @@ public class HookBehaviour : MonoBehaviour
         m_needNextThrow = false;
     }
 
-    void BackCurrentHook()
+    public void BackCurrentHook()
     {
         if (m_hookState == HookState.Idle || m_hookState == HookState.ComingBack)
             return;
 
+        if(m_hookInteractionIndex >= 0)
+            m_hookInteractions[m_hookInteractionIndex].hookInteraction.Detach();
+
         m_hookState = HookState.ComingBack;
+        if(m_hookGrabPoint != null)
+            Destroy(m_hookGrabPoint);
     }
 
     void UpdateThrowing()
@@ -121,17 +130,46 @@ public class HookBehaviour : MonoBehaviour
         m_totalDistance += dist;
 
         Vector3 pos = m_hookObject.transform.position;
+        Vector3 oldPos = pos;
         float radAngle = Mathf.Deg2Rad * m_angle;
         pos += new Vector3(Mathf.Cos(radAngle), Mathf.Sin(radAngle), 0) * dist;
-        m_hookObject.transform.position = pos;
 
-        if (m_totalDistance >= m_maxDistance)
-            m_hookState = HookState.ComingBack;
+        float rayDistance = (pos - oldPos).magnitude;
+
+        var hit = Physics2D.Raycast(oldPos, (pos - oldPos) / rayDistance, rayDistance, m_hookInteractionMask.value);
+        if (hit.transform != null)
+        {
+            m_grabObject = hit.transform.gameObject;
+            m_hookState = HookState.Attached;
+            pos = hit.point;
+
+            if (m_hookGrabPoint == null)
+                m_hookGrabPoint = new GameObject("Hook grab point");
+            m_hookGrabPoint.transform.parent = hit.transform;
+            m_hookGrabPoint.transform.position = hit.point;
+
+            AttachHookToTarget();
+        }
+        else if (m_totalDistance >= m_maxDistance)
+            BackCurrentHook();
+
+        m_hookObject.transform.position = pos;
     }
 
     void UpdateAttached()
     {
-       
+        if (m_hookGrabPoint != null)
+        {
+            m_hookObject.transform.position = m_hookGrabPoint.transform.position;
+            m_hookObject.transform.rotation = m_hookGrabPoint.transform.rotation;
+        }
+
+
+        if (m_grabObject == null)
+        {
+            BackCurrentHook();
+            return;
+        }
     }
 
     void UpdateComingBack()
@@ -157,5 +195,28 @@ public class HookBehaviour : MonoBehaviour
         {
             Debug.DrawLine(transform.position, m_hookObject.transform.position, Color.red);
         }
+    }
+
+    void AttachHookToTarget()
+    {
+        if (m_grabObject == null)
+            return;
+
+        m_hookInteractionIndex = -1;
+
+        for (int i = 0; i < m_hookInteractions.Count; i++)
+        {
+            if((m_hookInteractions[i].mask.value & (1 << m_grabObject.layer)) != 0)
+            {
+                m_hookInteractionIndex = i;
+
+                break;
+            }
+        }
+
+        if (m_hookInteractionIndex < 0)
+            return;
+
+        m_hookInteractions[m_hookInteractionIndex].hookInteraction.Attach(m_hookObject, m_grabObject);
     }
 }
