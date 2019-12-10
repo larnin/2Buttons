@@ -3,7 +3,7 @@ using System.Collections;
 
 public class MoveHookInteraction : HookInteractionBase
 {
-    [SerializeField] float m_attractSpeed;
+    [SerializeField] float m_attractSpeed = 0;
 
     bool m_enabled = false;
     GameObject m_hook = null;
@@ -64,6 +64,20 @@ public class MoveHookInteraction : HookInteractionBase
         correctedVelocity += attractVelocity;
 
         Vector2 nextPos = m_oldPos + correctedVelocity * Time.deltaTime;
+        float moveDist = (nextPos - m_oldPos).magnitude;
+
+        RaycastHit2D[] hits = new RaycastHit2D[16];
+        int result = m_rigidbody.Cast((nextPos - m_oldPos) / moveDist, hits, moveDist);
+        if(result != 0)
+        {
+            for(int i = 0; i < result; i++)
+            {
+                if (hits[i].distance < moveDist)
+                    moveDist = hits[i].distance;
+            }
+            nextPos = m_oldPos + correctedVelocity.normalized * moveDist;
+        }
+
         m_rigidbody.position = nextPos;
         m_rigidbody.velocity = correctedVelocity;
 
