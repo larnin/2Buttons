@@ -391,7 +391,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 5.65
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -646,7 +646,7 @@ GameObject:
   - component: {fileID: 1182942538}
   - component: {fileID: 1182942539}
   m_Layer: 8
-  m_Name: New Sprite
+  m_Name: Visual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -661,7 +661,7 @@ Transform:
   m_GameObject: {fileID: 1182942537}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1408354565}
   m_RootOrder: 0
@@ -704,8 +704,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: e29756d4d0fc12844ae5e9a75b47c1a3, type: 3}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Sprite: {fileID: 21300000, guid: e816be6300b2135418ccb29cee0a0622, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -804,12 +804,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1408354565}
-  - component: {fileID: 1408354564}
   - component: {fileID: 1408354567}
   - component: {fileID: 1408354566}
   - component: {fileID: 1408354568}
   - component: {fileID: 1408354569}
   - component: {fileID: 1408354570}
+  - component: {fileID: 1408354564}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -817,8 +817,8 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!58 &1408354564
-CircleCollider2D:
+--- !u!70 &1408354564
+CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -831,8 +831,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  serializedVersion: 2
-  m_Radius: 0.25
+  m_Size: {x: 1.2, y: 0.9}
+  m_Direction: 1
 --- !u!4 &1408354565
 Transform:
   m_ObjectHideFlags: 0
