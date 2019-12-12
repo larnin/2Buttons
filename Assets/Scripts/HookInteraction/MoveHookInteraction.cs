@@ -7,8 +7,7 @@ public class MoveHookInteraction : HookInteractionBase
 
     bool m_enabled = false;
     GameObject m_hook = null;
-
-    float m_oldDistance = 0;
+    
     Vector2 m_oldPos;
 
     Rigidbody2D m_rigidbody = null;
@@ -21,7 +20,6 @@ public class MoveHookInteraction : HookInteractionBase
 
         Vector2 pos = transform.position;
         Vector2 hookPos = hook.transform.position;
-        m_oldDistance = (hookPos - pos).magnitude;
         m_oldPos = pos;
 
         return true;
