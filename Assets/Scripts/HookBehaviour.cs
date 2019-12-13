@@ -39,6 +39,11 @@ public class HookBehaviour : MonoBehaviour
     GameObject m_hookGrabPoint = null;
     GameObject m_grabObject = null;
 
+    Transform m_ropeVisualTransform = null;
+    Vector2 m_ropeVisualSize = new Vector2(1, 1);
+    Transform m_hookVisualTransform = null;
+    Vector2 m_hookVisualSize = new Vector2(1, 1);
+
     private void Awake()
     {
         m_subscriberList.Add(new Event<ThrowHookEvent>.Subscriber(OnHookThrow));
@@ -58,6 +63,30 @@ public class HookBehaviour : MonoBehaviour
         if(m_hookObject == null)
         {
             m_hookObject = new GameObject("Hook Head");
+        }
+
+        m_ropeVisualTransform = transform.Find("Rope");
+        m_hookVisualTransform = transform.Find("Hook");
+
+        if(m_ropeVisualTransform != null)
+        {
+            var render = m_ropeVisualTransform.GetComponentInChildren<SpriteRenderer>();
+            if(render != null)
+            {
+                var rect = render.sprite.rect;
+                m_ropeVisualSize = new Vector2(rect.width, rect.height);
+                m_ropeVisualSize /= render.sprite.pixelsPerUnit;
+            }
+        }
+        if(m_hookVisualTransform != null)
+        {
+            var render = m_hookVisualTransform.GetComponentInChildren<SpriteRenderer>();
+            if (render != null)
+            {
+                var rect = render.sprite.rect;
+                m_hookVisualSize = new Vector2(rect.width, rect.height);
+                m_hookVisualSize /= render.sprite.pixelsPerUnit;
+            }
         }
     }
     
@@ -80,7 +109,7 @@ public class HookBehaviour : MonoBehaviour
                 break;
         }
 
-        DebugDrawHook();
+        UpdateHookRender();
     }
 
     void OnHookThrow(ThrowHookEvent e)
@@ -189,14 +218,6 @@ public class HookBehaviour : MonoBehaviour
         m_hookObject.transform.position = hookPos;
     }
 
-    void DebugDrawHook()
-    {
-        if(m_hookState != HookState.Idle)
-        {
-            Debug.DrawLine(transform.position, m_hookObject.transform.position, Color.red);
-        }
-    }
-
     void AttachHookToTarget()
     {
         if (m_grabObject == null)
@@ -218,5 +239,39 @@ public class HookBehaviour : MonoBehaviour
             return;
 
         m_hookInteractions[m_hookInteractionIndex].hookInteraction.Attach(m_hookObject, m_grabObject);
+    }
+
+    void UpdateHookRender()
+    {
+        bool show = m_hookState != HookState.Idle;
+
+        m_hookVisualTransform.gameObject.SetActive(show);
+        m_ropeVisualTransform.gameObject.SetActive(show);
+
+        if (!show)
+            return;
+
+        Vector2 pos = transform.position;
+        Vector2 hookPos = m_hookObject.transform.position;
+
+        m_hookVisualTransform.position = new Vector3(hookPos.x, hookPos.y, m_hookVisualTransform.position.z);
+
+        Vector2 dir = hookPos - pos;
+
+        float angle = Utility.Angle(dir);
+        m_hookVisualTransform.rotation = Quaternion.Euler(0, 0, Mathf.Rad2Deg * angle - 90);
+
+        float dist = dir.magnitude;
+        if (dist > 0.01f)
+        {
+            float ropeDist = dist - m_hookVisualSize.y / 2.0f;
+            Vector2 ropeTarget = pos + dir / dist * ropeDist;
+            Vector2 ropePos = (ropeTarget + pos) / 2;
+
+            m_ropeVisualTransform.position = new Vector3(ropePos.x, ropePos.y, m_ropeVisualTransform.position.z);
+            m_ropeVisualTransform.rotation = Quaternion.Euler(0, 0, Mathf.Rad2Deg * angle - 90);
+            m_ropeVisualTransform.localScale = new Vector3(1, ropeDist / m_ropeVisualSize.y, 1);
+        }
+        else m_ropeVisualTransform.gameObject.SetActive(false);
     }
 }
