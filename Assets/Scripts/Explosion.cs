@@ -6,6 +6,7 @@ public class Explosion : MonoBehaviour
     [SerializeField] float m_size = 1;
     [SerializeField] float m_power = 1;
     [SerializeField] float m_duration = 1;
+    [SerializeField] float m_explosionDuration = 0.5f;
 
     float m_timer = 0;
     
@@ -13,44 +14,47 @@ public class Explosion : MonoBehaviour
     {
         m_timer += Time.deltaTime;
 
-        var colliders = Physics2D.OverlapCircleAll(transform.position, m_size);
-
-        Vector2 pos = transform.position;
-
-        foreach(var c in colliders)
+        if (m_timer < m_explosionDuration)
         {
-            if (c.gameObject == gameObject)
-                continue;
+            var colliders = Physics2D.OverlapCircleAll(transform.position, m_size);
 
-            var rigidbody = c.GetComponent<Rigidbody2D>();
-            if (rigidbody == null)
-                return;
+            Vector2 pos = transform.position;
 
-            Vector2 targetPos = c.transform.position;
+            foreach (var c in colliders)
+            {
+                if (c.gameObject == gameObject)
+                    continue;
 
-            var dir = targetPos - pos;
-            float dist = dir.magnitude;
-            dir /= dist;
-            var orthoDir = new Vector2(dir.y, -dir.x);
+                var rigidbody = c.GetComponent<Rigidbody2D>();
+                if (rigidbody == null)
+                    return;
 
-            float power = dist / m_size * m_power;
+                Vector2 targetPos = c.transform.position;
 
-            var velocity = rigidbody.velocity;
+                var dir = targetPos - pos;
+                float dist = dir.magnitude;
+                dir /= dist;
+                var orthoDir = new Vector2(dir.y, -dir.x);
 
-            var dirVelocity = Utility.Project(velocity, dir);
-            var orthroVelocity = Utility.Project(velocity, orthoDir);
+                float power = dist / m_size * m_power;
 
-            float distDirVelocity = dirVelocity.magnitude;
-            if (distDirVelocity < power)
-                dirVelocity = dir * power;
+                var velocity = rigidbody.velocity;
 
-            velocity = dirVelocity + orthroVelocity;
+                var dirVelocity = Utility.Project(velocity, dir);
+                var orthroVelocity = Utility.Project(velocity, orthoDir);
 
-            rigidbody.velocity = velocity;
+                float distDirVelocity = dirVelocity.magnitude;
+                if (distDirVelocity < power)
+                    dirVelocity = dir * power;
 
-            var explosive = c.GetComponent<ExplosiveInteractable>();
-            if (explosive != null)
-                explosive.OnHit();
+                velocity = dirVelocity + orthroVelocity;
+
+                rigidbody.velocity = velocity;
+
+                var explosive = c.GetComponent<ExplosiveInteractable>();
+                if (explosive != null)
+                    explosive.OnHit();
+            }
         }
 
         if (m_timer >= m_duration)
